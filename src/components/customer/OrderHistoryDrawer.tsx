@@ -189,7 +189,7 @@ export default function OrderHistoryDrawer({ isOpen, onClose, onTrackOrder }: Or
                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Order ID: {order.id.slice(0, 8)}</p>
                             <p className="text-xs text-gray-500 font-medium mt-0.5">{formatDate(order.created_at)}</p>
                           </div>
-                          <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border transition-colors duration-700 ${theme.bg} ${theme.border}`}>
+                          <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border transition-colors duration-700 ${theme.bg}`}>
                             {theme.label}
                           </span>
                         </div>
