@@ -1,26 +1,102 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: #15271A;
+  --color-primary-dark: #0D1A10;
+  --color-secondary: #FDFBF7;
+  --color-secondary-dark: #F0EAE1;
+  --color-accent: #C5A059;
+  --color-accent-light: #E3C57F;
+  
+  --color-status-pending: #f59e0b;
+  --color-status-preparing: #3b82f6;
+  --color-status-ready: #10b981;
+
+  --color-background: var(--color-secondary);
+  --color-foreground: var(--color-primary-dark);
+  
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-playfair);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #FDFBF7;
+  --foreground: #1A1A1A;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 body {
+  overflow-x: hidden;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-lg border border-white/40 shadow-xl;
+  }
+  .glass-dark {
+    @apply bg-[#15271A]/85 backdrop-blur-xl border border-white/10 shadow-2xl;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* ── Print styles: only the receipt prints ────────────────────────── */
+@media print {
+  /* Step 1: hide everything */
+  .kds-no-print {
+    display: none !important;
+  }
+
+  /* Step 2: make the receipt fill the page */
+  .historica-receipt-modal {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 24px !important;
+    background: white !important;
+    z-index: 99999 !important;
+    display: block !important;
+    font-family: "Courier New", Courier, monospace !important;
+  }
+
+  /* Step 3: hide the modal chrome (backdrop, modal wrapper, close buttons) */
+  .receipt-modal-backdrop,
+  .receipt-modal-chrome {
+    display: none !important;
+  }
+  /* QR Code Print Styles */
+  .qr-print-page {
+    page-break-after: always;
+    break-after: page;
+  }
+  .qr-print-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+  .qr-print-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 20px !important;
+  }
+  .qr-card {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border: 2px dashed #ccc !important;
+    box-shadow: none !important;
+  }
 }
