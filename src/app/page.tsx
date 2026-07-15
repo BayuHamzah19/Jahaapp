@@ -312,7 +312,7 @@ function MenuContent() {
 
   // MAIN MENU PAGE
   return (
-    <div className="min-h-screen max-w-7xl mx-auto bg-secondary pb-[calc(9rem+env(safe-area-inset-bottom))] font-sans overflow-x-hidden relative md:shadow-2xl md:border-x md:border-gray-100">
+    <div className="min-h-screen w-full max-w-[100vw] mx-auto bg-secondary pb-[calc(9rem+env(safe-area-inset-bottom))] font-sans overflow-x-hidden relative md:max-w-7xl md:shadow-2xl md:border-x md:border-gray-100">
 
       {/* Floating Live Order Status Banner — only render after mount to avoid hydration mismatch */}
       {isMounted && activeOrderId && (
@@ -324,16 +324,16 @@ function MenuContent() {
       )}
 
       {/* Premium Header */}
-      <header className={`pb-8 px-6 bg-primary rounded-b-[2.5rem] relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-20 ${activeOrderId ? "pt-32" : "pt-14"}`}>
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-        <div className="absolute bottom-0 left-0 w-40 h-40 bg-accent opacity-20 rounded-full blur-2xl translate-y-1/3 -translate-x-1/4"></div>
+      <header className={`pb-8 px-6 bg-primary rounded-b-[2.5rem] relative overflow-hidden w-full max-w-[100vw] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-20 ${activeOrderId ? "pt-32" : "pt-14"}`}>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-40 h-40 bg-accent opacity-20 rounded-full blur-2xl translate-y-1/3"></div>
 
-        <div className="relative z-10 flex justify-between items-start mb-8">
-          <div>
-            <p className="text-accent text-[10px] font-black tracking-[0.3em] uppercase mb-1.5 opacity-90">Welcome to</p>
-            <h1 className="font-serif text-[38px] text-white font-bold tracking-wide leading-none">Historica</h1>
+        <div className="relative z-10 flex justify-between items-start mb-8 w-full">
+          <div className="min-w-0 flex-1">
+            <p className="text-accent text-[10px] font-black tracking-[0.3em] uppercase mb-1.5 opacity-90 truncate">Welcome to</p>
+            <h1 className="font-serif text-3xl sm:text-[38px] text-white font-bold tracking-wide leading-none truncate">Historica</h1>
           </div>
-          <div className="bg-white/10 backdrop-blur-md border border-white/10 px-4 py-2.5 rounded-[1.25rem] flex flex-col items-center shadow-lg">
+          <div className="bg-white/10 backdrop-blur-md border border-white/10 px-4 py-2.5 rounded-[1.25rem] flex flex-col items-center shadow-lg shrink-0 ml-4">
             <span className="text-[9px] font-black text-accent uppercase tracking-widest opacity-90">Table</span>
             <span className="text-xl font-black text-white leading-none mt-0.5">{tableNumber}</span>
           </div>
