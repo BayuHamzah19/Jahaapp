@@ -345,7 +345,7 @@ function MenuContent() {
             placeholder="What are you craving?"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="appearance-none w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-[1.25rem] py-4 pl-12 pr-4 text-[15px] text-white placeholder-white/60 focus:outline-none focus:border-accent/50 focus:bg-white/20 transition-all shadow-inner"
+            className="appearance-none w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-[1.25rem] py-4 pl-12 pr-4 text-base text-white placeholder-white/60 focus:outline-none focus:border-accent/50 focus:bg-white/20 transition-all shadow-inner"
           />
           <Search size={20} className="absolute left-4 top-4 text-white/60" />
         </div>
@@ -354,7 +354,7 @@ function MenuContent() {
       {/* Icon-Only Category Grid */}
       {!searchQuery && (
         <div className="mt-6 mb-2">
-          <div className="flex justify-center overflow-x-auto gap-4 px-4 pb-2 scrollbar-hide items-center w-full">
+          <div className="flex justify-start md:justify-center overflow-x-auto gap-4 px-4 pb-2 scrollbar-hide items-center w-full">
             {categories.map((cat) => {
               const isActive = activeCategory === cat;
               return (
