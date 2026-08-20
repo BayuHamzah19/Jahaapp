@@ -42,7 +42,7 @@ function MenuContent() {
   useEffect(() => {
     let isMounted = true;
     const fetchMenu = async () => {
-      const cached = sessionStorage.getItem("jaha_menu_cache");
+      const cached = localStorage.getItem("jaha_menu_cache");
       if (cached && isMounted) {
         setMenuItems(JSON.parse(cached));
         setLoadingMenu(false);
@@ -55,7 +55,7 @@ function MenuContent() {
         
         if (isMounted) {
           setMenuItems(fetched);
-          sessionStorage.setItem("jaha_menu_cache", JSON.stringify(fetched));
+          localStorage.setItem("jaha_menu_cache", JSON.stringify(fetched));
           setLoadingMenu(false);
         }
       } catch (err) {
@@ -445,17 +445,21 @@ function MenuContent() {
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
           {loadingMenu ? (
-            <div className="col-span-full flex justify-center py-12">
-              <div className="w-8 h-8 border-4 border-[#B25A38] border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          ) : (
+            Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="animate-pulse flex flex-col p-3 sm:p-4 rounded-[2rem] border border-gray-100 bg-white h-[280px] shadow-sm">
+                <div className="w-full aspect-square bg-gray-100 rounded-2xl mb-3"></div>
+                <div className="w-3/4 h-5 bg-gray-100 rounded-md mb-2"></div>
+                <div className="w-1/2 h-4 bg-gray-100 rounded-md"></div>
+                <div className="w-full h-10 bg-gray-100 rounded-xl mt-auto"></div>
+              </div>
+            ))
+          ) : filteredItems.length > 0 ? (
             filteredItems.map((item, idx) => (
               <motion.div key={item.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
                 <MenuItemCard item={item} onAdd={addToCart} />
               </motion.div>
             ))
-          )}
-          {!loadingMenu && filteredItems.length === 0 && (
+          ) : (
             <div className="col-span-full text-center text-gray-500 mt-16 flex flex-col items-center">
               <Search size={48} className="text-gray-300 mb-4 opacity-50" />
               <p className="font-medium text-lg">No items found.</p>
