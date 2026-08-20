@@ -1,0 +1,135 @@
+
+> historica-app@0.1.0 lint
+> eslint
+
+
+/home/bayu/BISNIS/Jaha/jahaapp/scripts/seed-menu.cjs
+  3:27  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  4:46  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/home/bayu/BISNIS/Jaha/jahaapp/src/app/(admin)/kds/page.tsx
+   14:65  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+   58:50  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/home/bayu/BISNIS/Jaha/jahaapp/src/app/(admin)/kds/page.tsx:58:50
+  56 |   const router = useRouter();
+  57 |   const [orders, setOrders] = useState<Order[]>([]);
+> 58 |   const [currentTime, setCurrentTime] = useState(Date.now());
+     |                                                  ^^^^^^^^^^ Cannot call impure function
+  59 |   const [error, setError] = useState("");
+  60 |   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
+  61 |   const [deleteOrderTarget, setDeleteOrderTarget] = useState<Order | null>(null);                                                                                                                                                                                react-hooks/purity
+  138:7   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/bayu/BISNIS/Jaha/jahaapp/src/app/(admin)/kds/page.tsx:138:7
+  136 |     } catch (err) {
+  137 |       console.error("Error setting up Firebase listener:", err);
+> 138 |       setError("Firebase is not configured correctly.");
+      |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  139 |     }
+  140 |   }, []);
+  141 |  react-hooks/set-state-in-effect
+
+/home/bayu/BISNIS/Jaha/jahaapp/src/app/(admin)/menu/page.tsx
+  194:47   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  194:60   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  210:19   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  221:49   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  287:21   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  387:95   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  387:115  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+
+/home/bayu/BISNIS/Jaha/jahaapp/src/app/(admin)/qr-codes/page.tsx
+  19:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/bayu/BISNIS/Jaha/jahaapp/src/app/(admin)/qr-codes/page.tsx:19:5
+  17 |
+  18 |   useEffect(() => {
+> 19 |     setOrigin(window.location.origin);
+     |     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  20 |   }, []);
+  21 |
+  22 |   const handleSequentialChange = (val: string) => {  react-hooks/set-state-in-effect
+
+/home/bayu/BISNIS/Jaha/jahaapp/src/app/(admin)/qr-generator/page.tsx
+  13:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/bayu/BISNIS/Jaha/jahaapp/src/app/(admin)/qr-generator/page.tsx:13:5
+  11 |   useEffect(() => {
+  12 |     // Get the base URL from the window object in the client
+> 13 |     setBaseUrl(window.location.origin);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  14 |   }, []);
+  15 |
+  16 |   const qrUrl = tableNumber ? `${baseUrl}/?table=${tableNumber}` : baseUrl;  react-hooks/set-state-in-effect
+
+/home/bayu/BISNIS/Jaha/jahaapp/src/app/(admin)/sales/page.tsx
+   40:10  warning  'clickCount' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  179:29  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  367:40  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  397:42  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+
+/home/bayu/BISNIS/Jaha/jahaapp/src/app/admin/login/page.tsx
+  42:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/bayu/BISNIS/Jaha/jahaapp/src/app/page.tsx
+   12:3   warning  'Coffee' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   12:28  warning  'Pizza' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+   12:35  warning  'CakeSlice' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+   13:3   warning  'GlassWater' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   13:55  warning  'Filter' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   84:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/bayu/BISNIS/Jaha/jahaapp/src/app/page.tsx:84:5
+  82 |
+  83 |   useEffect(() => {
+> 84 |     setIsMounted(true);
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  85 |     const savedOrderId = localStorage.getItem("jaha_active_order");
+  86 |     if (savedOrderId) setActiveOrderId(savedOrderId);
+  87 |  react-hooks/set-state-in-effect
+   90:65  warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+  212:24  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react/no-unescaped-entities
+  212:52  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react/no-unescaped-entities
+
+/home/bayu/BISNIS/Jaha/jahaapp/src/components/customer/MenuItemCard.tsx
+  36:42  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/bayu/BISNIS/Jaha/jahaapp/src/components/customer/OrderHistoryDrawer.tsx
+    7:42  warning  'CheckCircle2' is defined but never used                         @typescript-eslint/no-unused-vars
+    7:56  warning  'AlertCircle' is defined but never used                          @typescript-eslint/no-unused-vars
+  166:30  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  166:58  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/bayu/BISNIS/Jaha/jahaapp/test-firebase-auth.mjs
+  2:19  warning  'signInWithEmailAndPassword' is defined but never used  @typescript-eslint/no-unused-vars
+  5:7   warning  'auth' is assigned a value but never used               @typescript-eslint/no-unused-vars
+
+✖ 35 problems (22 errors, 13 warnings)
+

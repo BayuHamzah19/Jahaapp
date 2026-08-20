@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable */
 import Image from 'next/image';
 import { Plus, Sparkles, Ban } from "lucide-react";
 

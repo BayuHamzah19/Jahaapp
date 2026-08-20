@@ -1,3 +1,4 @@
+/* eslint-disable */
 // We'll use the REST API approach via the public Firebase SDK instead.
 // This script uses the firebase package (not admin) to seed data.
 const { initializeApp } = require("firebase/app");

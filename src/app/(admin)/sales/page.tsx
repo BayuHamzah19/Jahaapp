@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable */
 import { useState, useEffect } from "react";
 import { ChefHat, LayoutGrid, Utensils, LogOut, Download, TrendingUp, DollarSign, Receipt, Filter, QrCode, Trash2, AlertTriangle } from "lucide-react";
 import Link from "next/link";

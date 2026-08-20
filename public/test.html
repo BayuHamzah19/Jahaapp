@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html><body>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  try {
+    const app = initializeApp({ projectId: undefined, apiKey: undefined });
+    getAuth(app);
+    document.body.innerHTML = "<h1>Auth initialized!</h1>";
+  } catch (e) {
+    document.body.innerHTML = "<h1>Error: " + e.message + "</h1>";
+  }
+</script>
+</body></html>

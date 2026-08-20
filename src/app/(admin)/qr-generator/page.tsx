@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable */
 
 import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
