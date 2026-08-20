@@ -7,7 +7,7 @@ import { MenuItem } from "@/components/customer/MenuItemCard";
 import MenuItemCard from "@/components/customer/MenuItemCard";
 import LiveOrderStatusBanner from "@/components/customer/LiveOrderStatusBanner";
 import { db } from "@/lib/firebase/config";
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from "firebase/firestore";
 import {
   ShoppingBag, Search, ChevronRight, QrCode,
   Coffee, UtensilsCrossed, Pizza, CakeSlice,
@@ -42,31 +42,30 @@ function MenuContent() {
 
   useEffect(() => {
     let isMounted = true;
-    const fetchMenu = async () => {
-      const cached = localStorage.getItem("jaha_menu_cache");
-      if (cached && isMounted) {
-        setMenuItems(JSON.parse(cached));
+    
+    const cached = localStorage.getItem("jaha_menu_cache");
+    if (cached && isMounted) {
+      setMenuItems(JSON.parse(cached));
+      setLoadingMenu(false);
+    }
+    
+    const q = query(collection(db, "menu_items"), orderBy("name", "asc"));
+    const unsub = onSnapshot(q, (snap) => {
+      const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() } as MenuItem));
+      if (isMounted) {
+        setMenuItems(fetched);
+        localStorage.setItem("jaha_menu_cache", JSON.stringify(fetched));
         setLoadingMenu(false);
       }
-      
-      try {
-        const q = query(collection(db, "menu_items"), orderBy("name", "asc"));
-        const snap = await getDocs(q);
-        const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() } as MenuItem));
-        
-        if (isMounted) {
-          setMenuItems(fetched);
-          localStorage.setItem("jaha_menu_cache", JSON.stringify(fetched));
-          setLoadingMenu(false);
-        }
-      } catch (err) {
-        console.error("Failed to fetch menu:", err);
-        if (isMounted) setLoadingMenu(false);
-      }
-    };
+    }, (err) => {
+      console.error("Failed to fetch menu:", err);
+      if (isMounted) setLoadingMenu(false);
+    });
     
-    fetchMenu();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+      unsub();
+    };
   }, []);
 
   // Checkout & Payment
