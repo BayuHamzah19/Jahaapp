@@ -50,12 +50,19 @@ export default function AdminMenuPage() {
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   // Real-time listener on menu_items collection
   useEffect(() => {
     const q = query(collection(db, "menu_items"), orderBy("name", "asc"));
     const unsub = onSnapshot(q, (snap) => {
       const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() } as MenuItem));
       setItems(fetched);
+      setLoading(false);
+      setErrorMsg(null);
+    }, (err) => {
+      console.error("Firebase Error:", err);
+      setErrorMsg(err.message);
       setLoading(false);
     });
     return () => unsub();
@@ -173,6 +180,12 @@ export default function AdminMenuPage() {
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="w-10 h-10 border-4 border-[#C5A059] border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : errorMsg ? (
+          <div className="flex flex-col items-center justify-center h-64 text-red-500">
+            <AlertTriangle size={48} className="mb-4 opacity-50" />
+            <p className="font-bold text-lg">Firebase Connection Error</p>
+            <p className="text-sm mt-1 max-w-md text-center">{errorMsg}</p>
           </div>
         ) : displayItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-gray-400">
