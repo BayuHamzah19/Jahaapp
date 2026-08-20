@@ -20,7 +20,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Historica Digital Ordering System",
+  title: "Jaha Digital Ordering System",
   description: "QR-based self-service platform designed to handle high-traffic orders.",
 };
 

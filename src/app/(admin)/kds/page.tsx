@@ -1,11 +1,11 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Clock, CheckCircle2, ChefHat, Utensils, LayoutGrid, LogOut, Printer, X, TrendingUp, QrCode } from "lucide-react";
+import { Clock, CheckCircle2, ChefHat, Utensils, LayoutGrid, LogOut, Printer, X, TrendingUp, QrCode, Trash2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { db, auth } from "@/lib/firebase/config";
-import { collection, query, onSnapshot, updateDoc, doc, orderBy, Timestamp } from "firebase/firestore";
+import { collection, query, onSnapshot, updateDoc, doc, orderBy, Timestamp, deleteDoc } from "firebase/firestore";
 import toast, { Toaster } from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -58,7 +58,25 @@ export default function KitchenDisplaySystem() {
   const [currentTime, setCurrentTime] = useState(Date.now());
   const [error, setError] = useState("");
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
+  const [deleteOrderTarget, setDeleteOrderTarget] = useState<Order | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const isInitialLoad = useRef(true);
+
+  const handleDeleteOrder = async (orderId: string) => {
+    setIsDeleting(true);
+    try {
+      await deleteDoc(doc(db, "orders", orderId));
+      toast.success("Order deleted successfully", {
+        style: { background: '#1B3022', color: '#FFF', border: '1px solid #C5A059' }
+      });
+      setDeleteOrderTarget(null);
+    } catch (err) {
+      console.error("Error deleting order:", err);
+      toast.error("Failed to delete order");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Force re-render every minute to update elapsed times
   useEffect(() => {
@@ -152,7 +170,7 @@ export default function KitchenDisplaySystem() {
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-3">
             <ChefHat size={28} className="text-[#C5A059]" />
-            <h1 className="text-2xl font-serif font-black tracking-wide text-[#F5F2E8]">Historica KDS</h1>
+            <h1 className="text-2xl font-serif font-black tracking-wide text-[#F5F2E8]">Jaha KDS</h1>
           </div>
           <nav className="flex items-center gap-1.5 overflow-x-auto">
             <Link href="/kds" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-[#F5F2E8]/10 text-white border border-white/5 transition-all">
@@ -231,6 +249,13 @@ export default function KitchenDisplaySystem() {
                             <Clock size={14} />
                             {getElapsedTime(order.created_at)}
                           </div>
+                          <button
+                            onClick={() => setDeleteOrderTarget(order)}
+                            title="Delete Order"
+                            className="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-50 hover:bg-red-50 hover:text-red-600 text-gray-400 border border-gray-100 transition-all hover:border-red-100"
+                          >
+                            <Trash2 size={14} />
+                          </button>
                           <button
                             onClick={() => setReceiptOrder(order)}
                             title="View Receipt"
@@ -344,12 +369,12 @@ export default function KitchenDisplaySystem() {
                 </div>
 
                 {/* Printable receipt content */}
-                <div id="receipt-printable" className="historica-receipt-modal overflow-y-auto max-h-[75vh]">
+                <div id="receipt-printable" className="jaha-receipt-modal overflow-y-auto max-h-[75vh]">
                   <div className="p-6 font-mono" style={{ fontFamily: '"Courier New", Courier, monospace' }}>
 
                     {/* Receipt Header */}
                     <div className="text-center mb-5 pb-4" style={{ borderBottom: '2px dashed #d1d5db' }}>
-                      <div className="text-2xl font-bold text-[#1B3022] mb-0.5">Historica</div>
+                      <div className="text-2xl font-bold text-[#1B3022] mb-0.5">Jaha</div>
                       <div className="text-xs text-gray-500">Coffee & Kitchen · Surabaya</div>
                       <div className="text-xs text-gray-400 mt-1">Tel: (031) 000-0000</div>
                     </div>
@@ -441,10 +466,57 @@ export default function KitchenDisplaySystem() {
                     {/* Footer */}
                     <div className="text-center mt-6 pt-4 text-[10px] text-gray-400 space-y-1" style={{ borderTop: '2px dashed #d1d5db' }}>
                       <p className="font-bold text-gray-500">Thank you for dining with us!</p>
-                      <p>historicacoffee.id</p>
+                      <p>jahacafe.id</p>
                       <p className="mt-2">* * *</p>
                     </div>
                   </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Delete Confirmation Modal ─────────────────────────────────────────── */}
+      <AnimatePresence>
+        {deleteOrderTarget && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+              onClick={() => setDeleteOrderTarget(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none"
+            >
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm pointer-events-auto p-6 text-center">
+                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
+                  <AlertTriangle size={32} className="text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Order?</h3>
+                <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                  Are you sure you want to delete the order for <strong>Table {deleteOrderTarget.table_number}</strong>? This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setDeleteOrderTarget(null)}
+                    disabled={isDeleting}
+                    className="flex-1 px-4 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold rounded-xl transition-colors border border-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleDeleteOrder(deleteOrderTarget.id)}
+                    disabled={isDeleting}
+                    className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors shadow-md shadow-red-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isDeleting ? "Deleting..." : "Yes, Delete"}
+                  </button>
                 </div>
               </div>
             </motion.div>

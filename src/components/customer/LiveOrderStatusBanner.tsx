@@ -83,7 +83,7 @@ export default function LiveOrderStatusBanner({ orderId, tableNumber, onDismiss 
         setStatus(newStatus);
       } else {
         // Order doc was deleted — clean up and dismiss
-        localStorage.removeItem("historica_active_order");
+        localStorage.removeItem("jaha_active_order");
         onDismiss();
       }
     });
@@ -94,7 +94,7 @@ export default function LiveOrderStatusBanner({ orderId, tableNumber, onDismiss 
   useEffect(() => {
     if (status === "Ready" || status === "Delivered" || status === "Completed") {
       const timer = setTimeout(() => {
-        localStorage.removeItem("historica_active_order");
+        localStorage.removeItem("jaha_active_order");
         onDismiss();
       }, 15000);
       return () => clearTimeout(timer);
@@ -159,7 +159,7 @@ export default function LiveOrderStatusBanner({ orderId, tableNumber, onDismiss 
                 {(status === "Ready" || status === "Completed" || status === "Delivered") && (
                   <button
                     onClick={() => {
-                      localStorage.removeItem("historica_active_order");
+                      localStorage.removeItem("jaha_active_order");
                       onDismiss();
                     }}
                     className="w-7 h-7 rounded-full flex items-center justify-center text-gray-600 hover:bg-white/5 transition-colors"

@@ -6,7 +6,7 @@ import { MenuItem } from "@/components/customer/MenuItemCard";
 import MenuItemCard from "@/components/customer/MenuItemCard";
 import LiveOrderStatusBanner from "@/components/customer/LiveOrderStatusBanner";
 import { db } from "@/lib/firebase/config";
-import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs } from "firebase/firestore";
 import {
   ShoppingBag, Search, ChevronRight, QrCode,
   Coffee, UtensilsCrossed, Pizza, CakeSlice,
@@ -16,33 +16,57 @@ import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import OrderHistoryDrawer from "@/components/customer/OrderHistoryDrawer";
 
-const categoryIcons: Record<string, React.ReactNode> = {
-  "All": <span className="text-xs font-semibold uppercase tracking-wider">All</span>,
-  "Signature Coffee": <Coffee size={28} strokeWidth={2.5} />,
-  "Main Course": <UtensilsCrossed size={28} strokeWidth={2.5} />,
-  "Pasta & Pizza": <Pizza size={28} strokeWidth={2.5} />,
-  "Light Bites": <GlassWater size={28} strokeWidth={2.5} />,
-  "Desserts": <CakeSlice size={28} strokeWidth={2.5} />
+const cuteIcons: Record<string, string> = {
+  "Favorites": "❤️",
+  "All": "✨",
+  "Signature Coffee": "☕",
+  "Main Course": "🥘",
+  "Pasta & Pizza": "🍕",
+  "Light Bites": "🥐",
+  "Desserts": "🍰"
 };
 
-const staticMenuItems: MenuItem[] = [
-  { id: 1, name: "Historica Iced Coffee", price: 45000, category: "Signature Coffee", image: "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&q=80&w=500" },
-  { id: 2, name: "Matcha Latte", price: 48000, category: "Signature Coffee", image: "https://images.unsplash.com/photo-1515823662972-da6a2b4d3002?auto=format&fit=crop&q=80&w=500" },
-  { id: 3, name: "Classic Carbonara", price: 85000, category: "Pasta & Pizza", image: "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&q=80&w=500" },
-  { id: 4, name: "Margherita Pizza", price: 95000, category: "Pasta & Pizza", image: "https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?auto=format&fit=crop&q=80&w=500" },
-  { id: 5, name: "Truffle Mushroom Risotto", price: 95000, category: "Main Course", image: "https://images.unsplash.com/photo-1633964913295-ceb43826e7cf?auto=format&fit=crop&q=80&w=500" },
-  { id: 6, name: "Wagyu Beef Burger", price: 120000, category: "Main Course", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=500" },
-  { id: 7, name: "Classic Tiramisu", price: 55000, category: "Desserts", image: "https://images.unsplash.com/photo-1571115177098-24ec42ed204d?auto=format&fit=crop&q=80&w=500" },
-  { id: 8, name: "Almond Croissant", price: 35000, category: "Light Bites", image: "https://images.unsplash.com/photo-1623334044303-241021148842?auto=format&fit=crop&q=80&w=500" }
-];
+
 
 function MenuContent() {
   const searchParams = useSearchParams();
-  const tableNumber = searchParams.get("table");
+  const tableParam = searchParams.get("table");
+  const displayTable = tableParam || "Unknown";
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState<(MenuItem & { quantity: number })[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [loadingMenu, setLoadingMenu] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchMenu = async () => {
+      const cached = sessionStorage.getItem("jaha_menu_cache");
+      if (cached && isMounted) {
+        setMenuItems(JSON.parse(cached));
+        setLoadingMenu(false);
+      }
+      
+      try {
+        const q = query(collection(db, "menu_items"), orderBy("name", "asc"));
+        const snap = await getDocs(q);
+        const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() } as MenuItem));
+        
+        if (isMounted) {
+          setMenuItems(fetched);
+          sessionStorage.setItem("jaha_menu_cache", JSON.stringify(fetched));
+          setLoadingMenu(false);
+        }
+      } catch (err) {
+        console.error("Failed to fetch menu:", err);
+        if (isMounted) setLoadingMenu(false);
+      }
+    };
+    
+    fetchMenu();
+    return () => { isMounted = false; };
+  }, []);
 
   // Checkout & Payment
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
@@ -54,54 +78,45 @@ function MenuContent() {
   // localStorage is only read after mount on the client side.
   const [isMounted, setIsMounted] = useState(false);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
+  const [favoriteItemIds, setFavoriteItemIds] = useState<string[]>([]);
 
   useEffect(() => {
     setIsMounted(true);
-    const savedOrderId = localStorage.getItem("historica_active_order");
+    const savedOrderId = localStorage.getItem("jaha_active_order");
     if (savedOrderId) setActiveOrderId(savedOrderId);
+
+    const savedFavs = localStorage.getItem("jaha_favorite_items");
+    if (savedFavs) {
+      try { setFavoriteItemIds(JSON.parse(savedFavs)); } catch (e) {}
+    }
   }, []);
 
   // Helper: sync state and localStorage together
   const persistActiveOrder = (id: string | null) => {
     setActiveOrderId(id);
-    if (id) localStorage.setItem("historica_active_order", id);
-    else localStorage.removeItem("historica_active_order");
+    if (id) localStorage.setItem("jaha_active_order", id);
+    else localStorage.removeItem("jaha_active_order");
   };
 
-  const categories = ["All", "Signature Coffee", "Main Course", "Pasta & Pizza", "Light Bites", "Desserts"];
-
-  // Use the static menu items requested
-  const menuItems = staticMenuItems;
-
-  // No table number warning
-  if (!tableNumber) {
-    return (
-      <div className="min-h-screen bg-secondary flex flex-col items-center justify-center p-6 text-center">
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", bounce: 0.5 }}
-          className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center mb-8 shadow-[0_20px_50px_rgba(0,0,0,0.1)]"
-        >
-          <QrCode size={40} className="text-primary-dark" />
-        </motion.div>
-        <motion.h1 initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}
-          className="text-3xl font-serif font-bold mb-4 text-primary-dark">Welcome to Historica</motion.h1>
-        <motion.p initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}
-          className="text-gray-500 font-medium max-w-xs leading-relaxed">
-          Please scan the QR code located on your table to access the menu and place your order.
-        </motion.p>
-      </div>
-    );
-  }
+  const baseCategories = ["All", "Signature Coffee", "Main Course", "Pasta & Pizza", "Light Bites", "Desserts"];
+  const categories = favoriteItemIds.length > 0 ? ["Favorites", ...baseCategories] : baseCategories;
 
   const filteredItems = useMemo(() => {
     return menuItems.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = searchQuery || activeCategory === "All" ? true : item.category === activeCategory;
+      
+      let matchesCategory = false;
+      if (searchQuery || activeCategory === "All") {
+        matchesCategory = true;
+      } else if (activeCategory === "Favorites") {
+        matchesCategory = favoriteItemIds.includes(String(item.id));
+      } else {
+        matchesCategory = item.category === activeCategory;
+      }
+
       return matchesSearch && matchesCategory;
     });
-  }, [menuItems, activeCategory, searchQuery]);
+  }, [menuItems, activeCategory, searchQuery, favoriteItemIds]);
 
   const addToCart = (item: MenuItem) => {
     setCart(prev => {
@@ -118,7 +133,7 @@ function MenuContent() {
     setIsSubmitting(true);
     try {
       const docRef = await addDoc(collection(db, "orders"), {
-        table_number: parseInt(tableNumber as string),
+        table_number: tableParam ? parseInt(tableParam) : 0,
         items: cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
         total_amount: totalAmount,
         status: "Pending",
@@ -130,10 +145,16 @@ function MenuContent() {
       persistActiveOrder(docRef.id);
 
       // Save order to history in localStorage
-      const savedHistoryStr = localStorage.getItem("historica_order_history");
+      const savedHistoryStr = localStorage.getItem("jaha_order_history");
       const history = savedHistoryStr ? JSON.parse(savedHistoryStr) : [];
       history.push(docRef.id);
-      localStorage.setItem("historica_order_history", JSON.stringify(history));
+      localStorage.setItem("jaha_order_history", JSON.stringify(history));
+
+      // Save favorite items
+      const orderedItemIds = cart.map(i => String(i.id));
+      const newFavs = Array.from(new Set([...favoriteItemIds, ...orderedItemIds]));
+      setFavoriteItemIds(newFavs);
+      localStorage.setItem("jaha_favorite_items", JSON.stringify(newFavs));
 
       setCart([]);
       setIsCheckoutMode(false);
@@ -146,6 +167,22 @@ function MenuContent() {
     }
   };
 
+  // BLOCK DIRECT ACCESS WITHOUT TABLE
+  if (!tableParam) {
+    return (
+      <div className="min-h-screen bg-[#FDFBF7] flex flex-col items-center justify-center p-6 text-center font-sans">
+        <div className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-8 border border-gray-100 relative overflow-hidden">
+          <QrCode size={40} className="text-[#C5A059]" />
+          <div className="absolute inset-0 bg-[#C5A059]/5 animate-pulse"></div>
+        </div>
+        <h1 className="font-serif text-3xl font-bold text-primary-dark mb-3">Scan to Order</h1>
+        <p className="text-gray-500 text-[15px] font-medium max-w-[260px] leading-relaxed mb-8">
+          Please scan the QR code located on your table to access the menu and place your order.
+        </p>
+      </div>
+    );
+  }
+
   // PAYMENT CHECKOUT FLOW
   if (isCheckoutMode) {
     if (cart.length === 0) {
@@ -155,14 +192,14 @@ function MenuContent() {
           animate={{ opacity: 1, y: 0 }}
           className="min-h-screen bg-secondary flex flex-col font-sans"
         >
-          <header className="bg-primary text-white p-6 rounded-b-[2.5rem] shadow-xl flex items-center gap-4 z-20">
+          <header className="bg-white border-b border-gray-100 p-6 flex items-center gap-4 z-20 shadow-sm sticky top-0">
             <button
               onClick={() => setIsCheckoutMode(false)}
-              className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+              className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors border border-gray-200 text-gray-600"
             >
               <ChevronLeft size={20} />
             </button>
-            <h1 className="font-serif text-2xl font-bold text-secondary">Cart</h1>
+            <h1 className="font-serif text-2xl font-bold text-primary-dark">Cart</h1>
           </header>
           
           <main className="flex-1 flex flex-col items-center justify-center text-center p-6 pb-20">
@@ -191,14 +228,14 @@ function MenuContent() {
         animate={{ opacity: 1, y: 0 }}
         className="min-h-screen bg-secondary flex flex-col font-sans"
       >
-        <header className="bg-primary text-white p-6 rounded-b-[2.5rem] shadow-xl flex items-center gap-4 z-20">
+        <header className="bg-white border-b border-gray-100 p-6 flex items-center gap-4 z-20 shadow-sm sticky top-0">
           <button
             onClick={() => { if (paymentMethod) setPaymentMethod(null); else setIsCheckoutMode(false); }}
-            className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+            className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors border border-gray-200 text-gray-600"
           >
             <ChevronLeft size={20} />
           </button>
-          <h1 className="font-serif text-2xl font-bold text-secondary">
+          <h1 className="font-serif text-2xl font-bold text-primary-dark">
             {paymentMethod ? "Payment" : "Checkout"}
           </h1>
         </header>
@@ -261,7 +298,7 @@ function MenuContent() {
                   </div>
                   <h3 className="font-bold text-primary-dark text-xl mt-6 mb-6">Scan to Pay</h3>
                   <div className="p-3 bg-white border-2 border-gray-100 rounded-2xl shadow-inner">
-                    <QRCodeSVG value="https://historica.com/pay/demo" size={180} fgColor="#15271A" />
+                    <QRCodeSVG value="https://jahacafe.com/pay/demo" size={180} fgColor="#3B2F2F" />
                   </div>
                   <p className="font-black text-3xl text-accent mt-8 mb-2">Rp {totalAmount.toLocaleString("id-ID")}</p>
                   <p className="text-xs text-gray-400 font-medium text-center">Open your e-wallet or banking app and scan the QR code above.</p>
@@ -290,7 +327,7 @@ function MenuContent() {
                   </div>
                   <h3 className="font-bold text-primary-dark text-2xl mb-3">Pay at Cashier</h3>
                   <p className="text-gray-500 text-sm mb-8 leading-relaxed px-4">
-                    Please proceed to the cashier and mention your <strong className="text-primary-dark">Table {tableNumber}</strong>.
+                    Please proceed to the cashier and mention your <strong className="text-primary-dark">{tableParam ? `Table ${tableParam}` : "Order"}</strong>.
                   </p>
                   <p className="font-black text-3xl text-accent mb-2">Rp {totalAmount.toLocaleString("id-ID")}</p>
                 </div>
@@ -312,66 +349,81 @@ function MenuContent() {
 
   // MAIN MENU PAGE
   return (
-    <div className="min-h-screen w-full max-w-[100vw] mx-auto bg-secondary pb-[calc(9rem+env(safe-area-inset-bottom))] font-sans overflow-x-hidden relative md:max-w-7xl md:shadow-2xl md:border-x md:border-gray-100">
+    <div className="min-h-screen w-full mx-auto bg-[#FDFBF7] pb-[calc(9rem+env(safe-area-inset-bottom))] font-sans relative md:max-w-7xl md:shadow-2xl md:border-x md:border-gray-100">
 
       {/* Floating Live Order Status Banner — only render after mount to avoid hydration mismatch */}
       {isMounted && activeOrderId && (
         <LiveOrderStatusBanner
           orderId={activeOrderId}
-          tableNumber={tableNumber}
+          tableNumber={tableParam || "0"}
           onDismiss={() => persistActiveOrder(null)}
         />
       )}
 
-      {/* Premium Header */}
-      <header className={`pb-8 px-6 bg-primary rounded-b-[2.5rem] relative overflow-hidden w-full max-w-[100vw] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-20 ${activeOrderId ? "pt-32" : "pt-14"}`}>
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2"></div>
-        <div className="absolute bottom-0 left-0 w-40 h-40 bg-accent opacity-20 rounded-full blur-2xl translate-y-1/3"></div>
-
-        <div className="relative z-10 flex justify-between items-start mb-8 w-full">
+      {/* Fresh, Airy Header */}
+      <header className={`pt-8 pb-6 px-5 sm:px-8 lg:px-10 max-w-7xl mx-auto w-full z-20 relative transition-all ${activeOrderId ? "pt-32" : "pt-14"}`}>
+        <div className="flex justify-between items-start w-full">
           <div className="min-w-0 flex-1">
-            <p className="text-accent text-[10px] font-black tracking-[0.3em] uppercase mb-1.5 opacity-90 truncate">Welcome to</p>
-            <h1 className="font-serif text-3xl sm:text-[38px] text-white font-bold tracking-wide leading-none truncate">Historica</h1>
+            <h1 className="font-serif text-[32px] sm:text-[40px] text-primary-dark font-extrabold tracking-tight leading-none mb-1.5">
+              Welcome to <span className="text-accent italic font-medium">Jaha</span>
+            </h1>
+            <p className="text-gray-500 font-medium text-sm flex items-center gap-1.5">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+              {new Date().getHours() < 12 ? "Good morning!" : new Date().getHours() < 18 ? "Good afternoon!" : "Good evening!"}
+            </p>
           </div>
-          <div className="bg-white/10 backdrop-blur-md border border-white/10 px-4 py-2.5 rounded-[1.25rem] flex flex-col items-center shadow-lg shrink-0 ml-4">
-            <span className="text-[9px] font-black text-accent uppercase tracking-widest opacity-90">Table</span>
-            <span className="text-xl font-black text-white leading-none mt-0.5">{tableNumber}</span>
+          <div className="bg-white border border-gray-100 px-4 py-2.5 rounded-[1.25rem] flex flex-col items-center shadow-sm shrink-0 ml-4 ring-1 ring-gray-900/5">
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Table</span>
+            <span className={`font-black text-primary-dark leading-none mt-0.5 ${!tableParam ? "text-sm" : "text-xl"}`}>{displayTable}</span>
           </div>
         </div>
 
-        <div className="relative z-10">
+        <div className="mt-8 relative z-10 max-w-lg">
           <input
             type="text"
-            placeholder="What are you craving?"
+            placeholder="Search for coffee, pasta, desserts..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="appearance-none w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-[1.25rem] py-4 pl-12 pr-4 text-base text-white placeholder-white/60 focus:outline-none focus:border-accent/50 focus:bg-white/20 transition-all shadow-inner"
+            className="w-full bg-white border border-gray-200 rounded-full py-4 pl-12 pr-4 text-[15px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
           />
-          <Search size={20} className="absolute left-4 top-4 text-white/60" />
+          <Search size={20} className="absolute left-4 top-4 text-gray-400" />
         </div>
       </header>
 
-      {/* Icon-Only Category Grid */}
+      {/* Categories - Horizontal Scroll */}
       {!searchQuery && (
-        <div className="mt-6 mb-2">
-          <div className="flex justify-start md:justify-center overflow-x-auto gap-4 px-4 pb-2 scrollbar-hide items-center w-full">
-            {categories.map((cat) => {
-              const isActive = activeCategory === cat;
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`shrink-0 w-[3.25rem] h-[3.25rem] sm:w-14 sm:h-14 rounded-[1.125rem] flex items-center justify-center transition-all duration-300 shadow-[0_4px_20px_rgb(0,0,0,0.04)] ${
-                    isActive
-                      ? "bg-primary text-accent-light shadow-[0_8px_25px_rgba(27,48,34,0.3)] scale-105"
-                      : "bg-white text-primary-dark border border-gray-100 hover:bg-gray-50 hover:scale-105"
-                  }`}
-                >
-                  {categoryIcons[cat]}
-                </button>
-              );
-            })}
-          </div>
+        <div className="flex overflow-x-auto scrollbar-hide gap-5 sm:gap-8 mb-6 pb-4 px-4 sm:px-6 lg:px-8 mt-6 max-w-7xl mx-auto w-full items-start">
+          {categories.map((category) => {
+            const isActive = activeCategory === category;
+            const emoji = cuteIcons[category] || "🍽️";
+            return (
+              <motion.button
+                key={category}
+                onClick={() => setActiveCategory(category)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.9, rotate: -5 }}
+                animate={isActive ? { y: [0, -5, 0] } : {}}
+                transition={{ duration: 0.3 }}
+                className={`flex flex-col items-center gap-2.5 shrink-0 group ${isActive ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`}
+              >
+                <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-[1.5rem] flex items-center justify-center text-3xl sm:text-4xl shadow-sm transition-all duration-300 ${
+                  isActive 
+                    ? "bg-primary shadow-lg shadow-primary/30 scale-110 ring-4 ring-primary/10" 
+                    : "bg-white border-2 border-gray-100 group-hover:border-primary/20 group-hover:shadow-md"
+                }`}>
+                  <motion.span 
+                    animate={isActive ? { rotate: [0, 15, -15, 0] } : {}} 
+                    transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                  >
+                    {emoji}
+                  </motion.span>
+                </div>
+                <span className={`text-[11px] sm:text-xs font-bold uppercase tracking-wider text-center transition-colors max-w-[80px] leading-tight ${isActive ? 'text-primary' : 'text-gray-500'}`}>
+                  {category}
+                </span>
+              </motion.button>
+            );
+          })}
         </div>
       )}
 
@@ -380,7 +432,7 @@ function MenuContent() {
         {activeOrderId && (
           <div className="bg-orange-50/70 border border-orange-100/50 rounded-[1.25rem] p-3 mb-5 mt-2 flex items-center gap-3 shadow-sm mx-1">
             <div className="bg-white rounded-full p-1.5 shadow-sm border border-orange-50 shrink-0">
-              <Info size={16} className="text-[#C5A059]" />
+              <Info size={16} className="text-[#B25A38]" />
             </div>
             <p className="text-[12px] text-primary-dark font-medium leading-snug">
               Kindly remain at your selected table until your order is served.
@@ -392,13 +444,19 @@ function MenuContent() {
           {searchQuery ? "Search Results" : activeCategory}
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
-          {filteredItems.map((item, idx) => (
-            <motion.div key={item.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
-              <MenuItemCard item={item} onAdd={addToCart} />
-            </motion.div>
-          ))}
-          {filteredItems.length === 0 && (
-            <div className="text-center text-gray-500 mt-16 flex flex-col items-center">
+          {loadingMenu ? (
+            <div className="col-span-full flex justify-center py-12">
+              <div className="w-8 h-8 border-4 border-[#B25A38] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            filteredItems.map((item, idx) => (
+              <motion.div key={item.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
+                <MenuItemCard item={item} onAdd={addToCart} />
+              </motion.div>
+            ))
+          )}
+          {!loadingMenu && filteredItems.length === 0 && (
+            <div className="col-span-full text-center text-gray-500 mt-16 flex flex-col items-center">
               <Search size={48} className="text-gray-300 mb-4 opacity-50" />
               <p className="font-medium text-lg">No items found.</p>
             </div>
@@ -480,7 +538,7 @@ export default function CustomerMenu() {
     <Suspense fallback={
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
         <div className="w-8 h-8 border-4 border-orange-200 border-t-orange-700 rounded-full animate-spin mb-4" />
-        <span className="font-serif font-bold text-gray-900 tracking-wide">Historica</span>
+        <span className="font-serif font-bold text-gray-900 tracking-wide">Jaha Cafe</span>
       </div>
     }>
       <MenuContent />

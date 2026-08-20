@@ -1,17 +1,18 @@
 "use client";
 import { useState, useEffect } from "react";
-import { ChefHat, LayoutGrid, Utensils, LogOut, Download, TrendingUp, DollarSign, Receipt, Filter, QrCode } from "lucide-react";
+import { ChefHat, LayoutGrid, Utensils, LogOut, Download, TrendingUp, DollarSign, Receipt, Filter, QrCode, Trash2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { db, auth } from "@/lib/firebase/config";
-import { collection, query, onSnapshot, where, Timestamp } from "firebase/firestore";
+import { collection, query, onSnapshot, where, Timestamp, getDocs, writeBatch, doc } from "firebase/firestore";
 import toast, { Toaster } from "react-hot-toast";
 import * as XLSX from 'xlsx';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, Legend 
 } from 'recharts';
+import { AnimatePresence, motion } from "framer-motion";
 
 interface Order {
   id: string;
@@ -34,6 +35,50 @@ export default function SalesReportPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const [devMode, setDevMode] = useState(false);
+
+  const handleSecretClick = () => {
+    setClickCount(prev => {
+      const newCount = prev + 1;
+      if (newCount >= 5) {
+        setDevMode(prevDev => !prevDev);
+        toast.success(devMode ? "Developer Mode Disabled" : "Developer Mode Enabled: Database tools unlocked!", {
+          icon: devMode ? "🔒" : "🔓",
+          style: { background: '#1B3022', color: '#FFF', border: '1px solid #C5A059' }
+        });
+        return 0;
+      }
+      return newCount;
+    });
+  };
+
+  const handleDeleteAllData = async () => {
+    setIsDeletingAll(true);
+    try {
+      const q = query(collection(db, "orders"));
+      const snapshot = await getDocs(q);
+      
+      const batch = writeBatch(db);
+      snapshot.docs.forEach((docSnap) => {
+        batch.delete(doc(db, "orders", docSnap.id));
+      });
+      
+      await batch.commit();
+      
+      toast.success("All dummy data has been deleted!", {
+        style: { background: '#1B3022', color: '#FFF', border: '1px solid #C5A059' }
+      });
+      setShowDeleteAllModal(false);
+    } catch (err) {
+      console.error("Error deleting all data:", err);
+      toast.error("Failed to delete data.");
+    } finally {
+      setIsDeletingAll(false);
+    }
+  };
 
   // Time filters
   const currentDate = new Date();
@@ -150,7 +195,7 @@ export default function SalesReportPage() {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Sales Report");
     
     const monthName = MONTHS[selectedMonth];
-    const fileName = `Historica_Sales_Report_${monthName}_${selectedYear}.xlsx`;
+    const fileName = `Jaha_Sales_Report_${monthName}_${selectedYear}.xlsx`;
     
     XLSX.writeFile(workbook, fileName);
     toast.success(`Excel file for ${monthName} generated!`);
@@ -178,7 +223,7 @@ export default function SalesReportPage() {
         <div className="flex items-center gap-8 flex-wrap">
           <div className="flex items-center gap-3">
             <ChefHat size={28} className="text-[#C5A059]" />
-            <h1 className="text-2xl font-serif font-black tracking-wide text-[#F5F2E8]">Historica Admin</h1>
+            <h1 className="text-2xl font-serif font-black tracking-wide text-[#F5F2E8]">Jaha Admin</h1>
           </div>
           <nav className="flex items-center gap-1.5 overflow-x-auto">
             <Link href="/kds" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
@@ -212,7 +257,12 @@ export default function SalesReportPage() {
         {/* Header & Filters */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
-            <h2 className="text-3xl font-serif font-black text-[#1B3022] mb-2">Sales Overview</h2>
+            <h2 
+              onClick={handleSecretClick}
+              className="text-3xl font-serif font-black text-[#1B3022] mb-2 cursor-default select-none"
+            >
+              Sales Overview
+            </h2>
             <p className="text-gray-500 font-medium text-sm">Review revenue and top items by month.</p>
           </div>
           
@@ -245,6 +295,16 @@ export default function SalesReportPage() {
             >
               <Download size={16} strokeWidth={2.5} /> Export
             </button>
+            
+            {/* HIDDEN DEV MODE BUTTON */}
+            {devMode && (
+              <button
+                onClick={() => setShowDeleteAllModal(true)}
+                className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold px-5 py-2.5 rounded-xl border border-red-200 transition-all active:scale-95 ml-2"
+              >
+                <Trash2 size={16} strokeWidth={2.5} /> Clear All Data
+              </button>
+            )}
           </div>
         </div>
 
@@ -406,6 +466,53 @@ export default function SalesReportPage() {
         </div>
       </main>
       <Toaster position="top-right" />
+
+      {/* ── Delete All Data Modal ─────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showDeleteAllModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+              onClick={() => setShowDeleteAllModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none"
+            >
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm pointer-events-auto p-6 text-center">
+                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
+                  <AlertTriangle size={32} className="text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Clear All Data?</h3>
+                <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                  Are you sure you want to delete <strong>ALL</strong> orders from the database? This is usually done before deploying to production. This action <strong>cannot be undone</strong>.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowDeleteAllModal(false)}
+                    disabled={isDeletingAll}
+                    className="flex-1 px-4 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold rounded-xl transition-colors border border-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteAllData}
+                    disabled={isDeletingAll}
+                    className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors shadow-md shadow-red-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isDeletingAll ? "Clearing..." : "Yes, Clear All"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

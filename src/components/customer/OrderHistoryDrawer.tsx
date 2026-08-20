@@ -48,7 +48,7 @@ export default function OrderHistoryDrawer({ isOpen, onClose, onTrackOrder }: Or
     const setupHistoryListener = () => {
       setLoading(true);
       try {
-        const savedHistoryStr = localStorage.getItem("historica_order_history");
+        const savedHistoryStr = localStorage.getItem("jaha_order_history");
         if (!savedHistoryStr) {
           setOrders([]);
           setLoading(false);
@@ -181,7 +181,11 @@ export default function OrderHistoryDrawer({ isOpen, onClose, onTrackOrder }: Or
                     return (
                       <div
                         key={order.id}
-                        className="bg-white p-5 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex flex-col"
+                        onClick={() => {
+                          onTrackOrder(order.id);
+                          onClose();
+                        }}
+                        className="bg-white p-5 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex flex-col cursor-pointer hover:border-accent/30 hover:shadow-md transition-all active:scale-[0.98]"
                       >
                         {/* Card Top */}
                         <div className="flex justify-between items-start pb-3 border-b border-gray-50">
@@ -218,12 +222,17 @@ export default function OrderHistoryDrawer({ isOpen, onClose, onTrackOrder }: Or
                             </p>
                           </div>
 
-                          {isActive && (
+                          {isActive ? (
                             <button
-                              onClick={() => onTrackOrder(order.id)}
                               className="flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs px-4 py-2.5 rounded-xl border border-emerald-100/50 transition-colors"
                             >
                               Track Order <ChevronRight size={14} strokeWidth={2.5} />
+                            </button>
+                          ) : (
+                            <button
+                              className="flex items-center gap-1 bg-gray-50 text-gray-500 font-bold text-xs px-4 py-2.5 rounded-xl border border-gray-200 transition-colors"
+                            >
+                              View Details <ChevronRight size={14} strokeWidth={2.5} />
                             </button>
                           )}
                         </div>

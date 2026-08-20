@@ -86,7 +86,7 @@ export default function AdminLogin() {
             <div className="w-16 h-16 bg-[#1B3022] rounded-[1.5rem] flex items-center justify-center shadow-lg shadow-[#1B3022]/20 mb-5 border border-[#C5A059]/20 ring-8 ring-[#1B3022]/5">
               <ChefHat size={28} className="text-[#C5A059]" />
             </div>
-            <h1 className="font-serif text-3xl font-black text-[#1B3022] tracking-tight">Historica Admin</h1>
+            <h1 className="font-serif text-3xl font-black text-[#1B3022] tracking-tight">Jaha Admin</h1>
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-[0.2em] mt-2">Kitchen Staff Portal</p>
           </div>
 
@@ -106,7 +106,7 @@ export default function AdminLogin() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@historicacoffee.com"
+                  placeholder="admin@jahacafe.com"
                   autoComplete="email"
                   className="w-full pl-11 pr-4 py-3.5 bg-gray-50 rounded-2xl border border-gray-200 focus:border-[#C5A059] focus:ring-2 focus:ring-[#C5A059]/20 outline-none text-sm font-medium text-gray-800 placeholder:text-gray-400 transition-all"
                   required

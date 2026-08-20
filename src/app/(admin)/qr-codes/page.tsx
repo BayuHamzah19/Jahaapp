@@ -43,7 +43,7 @@ export default function QRCodesPage() {
         <div className="flex items-center gap-8 flex-wrap">
           <div className="flex items-center gap-3">
             <ChefHat size={28} className="text-[#C5A059]" />
-            <h1 className="text-2xl font-serif font-black tracking-wide text-[#F5F2E8]">Historica Admin</h1>
+            <h1 className="text-2xl font-serif font-black tracking-wide text-[#F5F2E8]">Jaha Admin</h1>
           </div>
           <nav className="flex items-center gap-1.5 overflow-x-auto">
             <Link href="/kds" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
@@ -138,7 +138,7 @@ export default function QRCodesPage() {
                   >
                     {/* Brand Header */}
                     <div className="mb-6 pb-4 border-b border-gray-100 w-full">
-                      <h3 className="font-serif text-2xl font-black text-[#1B3022] tracking-wide">Historica</h3>
+                      <h3 className="font-serif text-2xl font-black text-[#1B3022] tracking-wide">Jaha</h3>
                       <p className="text-[10px] uppercase tracking-widest text-[#C5A059] font-bold mt-1">Coffee & Kitchen</p>
                     </div>
 

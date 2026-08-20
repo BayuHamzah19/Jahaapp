@@ -44,7 +44,7 @@ export default function QRGenerator() {
         // Download
         const pngFile = canvas.toDataURL("image/png");
         const downloadLink = document.createElement("a");
-        downloadLink.download = `historica-table-${tableNumber}.png`;
+        downloadLink.download = `jaha-table-${tableNumber}.png`;
         downloadLink.href = `${pngFile}`;
         downloadLink.click();
       }
@@ -88,7 +88,7 @@ export default function QRGenerator() {
                     value={qrUrl} 
                     size={200}
                     level={"H"}
-                    fgColor="#1B3022" // Historica primary
+                    fgColor="#3B2F2F" // Jaha primary
                   />
                 </div>
                 <p className="font-bold text-primary-dark text-xl">Table {tableNumber}</p>
